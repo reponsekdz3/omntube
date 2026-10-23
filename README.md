@@ -51,8 +51,8 @@ LiveKit uses native WebRTC and requires a development client or store build rath
 Requires Node.js 22 LTS or a compatible Node.js 20.19+ release.
 
 \`\`\`bash
-git clone https://github.com/uwiduhayekevine008-star/omnitube.git
-cd omnitube
+git clone https://github.com/reponsekdz3/omntube.git
+cd omntube
 npm install
 cp .env.example .env.local
 \`\`\`
