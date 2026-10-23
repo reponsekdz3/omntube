@@ -1,0 +1,30 @@
+{
+  "name": "omnitube",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": { "node": ">=20.19.0" },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "livekit-client": "2.23.0",
+    "livekit-server-sdk": "2.13.1",
+    "lucide-react": "1.59.0",
+    "hls.js": "1.7.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tus-js-client": "4.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.0.4",
+    "typescript": "5.9.3",
+    "vite": "7.3.7"
+  }
+}

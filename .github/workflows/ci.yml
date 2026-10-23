@@ -1,0 +1,104 @@
+name: Build and typecheck
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  web-verify:
+    name: Web · TypeScript and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build
+
+  supabase-db-verify:
+    name: Supabase · Apply and lint all migrations locally
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start local Supabase services
+        run: supabase start -x studio,imgproxy,inbucket,logflare,vector
+      - name: Apply the complete migration chain
+        run: supabase db reset --local
+      - name: Lint migrated database security and performance
+        run: supabase db lint --local --schema public,omnitube_private
+      - name: Stop local Supabase services
+        if: always()
+        run: supabase stop --no-backup
+
+  media-worker-verify:
+    name: Media worker · Syntax and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/media-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install media worker dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate worker syntax
+        run: npm run check
+      - name: Run media worker tests
+        run: npm test
+
+  supabase-functions-verify:
+    name: Supabase Edge Functions · Deno typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install shared npm dependencies for Deno's node_modules resolver
+        run: npm install --no-audit --no-fund
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Typecheck all Supabase Edge Functions
+        run: deno check supabase/functions/*/index.ts
+
+  mobile-verify:
+    name: Expo · TypeScript and Android export
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: apps/mobile
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://mrrndahmjfwiugjnjthi.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_vOXALrtwgIOcsFVrIJ3hTA_YQ521o7k
+      EXPO_PUBLIC_LIVEKIT_URL: wss://YOUR_LIVEKIT_HOST
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install mobile dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate native dependencies
+        run: npx expo install --check
+      - name: Typecheck mobile app
+        run: npm run typecheck
+      - name: Export Android app bundle
+        run: npx expo export --platform android --output-dir dist-ci
